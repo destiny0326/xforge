@@ -85,6 +85,7 @@ export default class UIMgrShade extends Component {
                 spriteFrame.texture = renderTexture;
                 spriteFrame.flipUVY = true;
                 this.node.getComponent(Sprite).spriteFrame = spriteFrame;
+                this.blurMaterial.setProperty('blurLevel', count === 0 ? 3 : 1);
 
                 if (count++ === 2) {
                     this.node.getComponent(Sprite).spriteFrame.flipUVY = false;
