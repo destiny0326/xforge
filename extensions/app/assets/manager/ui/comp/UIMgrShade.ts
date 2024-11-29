@@ -59,6 +59,8 @@ export default class UIMgrShade extends Component {
                 .filter(camera => {
                     if (!camera.enabledInHierarchy) return false;
                     if (camera.targetTexture) return false;
+                    // 所在节点名 设置为 # 开头，表示不渲染该相机
+                    if (camera.node.name[0] === '#') return false;
                     return true;
                 });
             const cameraList2 = cameraList.map(camera => camera.camera);
