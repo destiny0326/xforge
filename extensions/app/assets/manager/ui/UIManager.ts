@@ -262,6 +262,7 @@ export default class UIManager<UIName extends string, MiniName extends string> e
         this.shade = instantiate(this.shadePre);
         this.shade.parent = this.UserInterface;
         this.shade.active = false;
+        this.shade.getComponent(Widget).target = this.Root2D;
 
         this.loading = instantiate(this.loadingPre);
         this.loading.parent = this.node;

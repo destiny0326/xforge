@@ -1,4 +1,4 @@
-import { Camera, Color, Component, Director, Material, RenderTexture, Sprite, SpriteFrame, UIOpacity, _decorator, director, view } from 'cc';
+import { Camera, Color, Component, Director, Material, RenderTexture, Sprite, SpriteFrame, UIOpacity, UITransform, _decorator, director } from 'cc';
 const { ccclass, property, requireComponent } = _decorator;
 
 @ccclass('UIMgrShade')
@@ -54,21 +54,22 @@ export default class UIMgrShade extends Component {
             this.node.getComponent(Sprite).spriteFrame = null;
             this.node.getComponent(Sprite).customMaterial = this.blurMaterial;
 
-            const cameraList = director.getScene().getComponentsInChildren(Camera)
-                .sort((a, b) => a.priority - b.priority)
-                .filter(camera => {
-                    if (!camera.enabledInHierarchy) return false;
-                    if (camera.targetTexture) return false;
-                    // 所在节点名 设置为 # 开头，表示不渲染该相机
-                    if (camera.node.name[0] === '#') return false;
-                    return true;
-                });
-            const cameraList2 = cameraList.map(camera => camera.camera);
+            const cameras = director.getScene().getComponentsInChildren(Camera);
 
             let count = 0;
             director.targetOff(this);
             director.on(Director.EVENT_BEFORE_RENDER, () => {
-                const size = view.getVisibleSize();
+                const cameraList = cameras.sort((a, b) => a.priority - b.priority)
+                    .filter(camera => {
+                        if (!camera.enabledInHierarchy) return false;
+                        if (camera.targetTexture) return false;
+                        // 所在节点名 设置为 # 开头，表示不渲染该相机
+                        if (camera.node.name[0] === '#') return false;
+                        return true;
+                    });
+                const cameraList2 = cameraList.map(camera => camera.camera);
+
+                const size = this.node.getComponent(UITransform);
                 const renderTexture = new RenderTexture();
                 renderTexture.reset({ width: size.width / 2, height: size.height / 2 });
 
