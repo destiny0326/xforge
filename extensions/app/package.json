@@ -1,0 +1,124 @@
+{
+    "package_version": 2,
+    "name": "app",
+    "version": "2.0.0",
+    "author": "向前",
+    "editor": ">=3.8.0",
+    "license": "MIT",
+    "description": "i18n:app.description",
+    "main": "./engine/dist/main.js",
+    "contributions": {
+        "builder": "./engine/dist/builder/index.js",
+        "scene": {
+            "script": "./engine/dist/scene.js"
+        },
+        "asset-db": {
+            "mount": {
+                "path": "./assets",
+                "readonly": true
+            }
+        },
+        "inspector": {
+            "section": {
+                "asset": {
+                    "directory": "./engine/dist/inspector/asset-directory.js"
+                }
+            }
+        },
+        "messages": {
+            "open-panel": {
+                "methods": [
+                    "open-panel"
+                ]
+            },
+            "open-help": {
+                "methods": [
+                    "open-help"
+                ]
+            },
+            "open-repository": {
+                "methods": [
+                    "open-repository"
+                ]
+            },
+            "refresh-executor": {
+                "methods": [
+                    "refresh-executor"
+                ]
+            },
+            "scene:ready": {
+                "methods": [
+                    "scene:ready"
+                ]
+            },
+            "asset-db:ready": {
+                "methods": [
+                    "asset-db:ready"
+                ]
+            },
+            "asset-db:asset-add": {
+                "methods": [
+                    "asset-db:asset-add"
+                ]
+            },
+            "asset-db:asset-change": {
+                "methods": [
+                    "asset-db:asset-change"
+                ]
+            },
+            "asset-db:asset-delete": {
+                "methods": [
+                    "asset-db:asset-delete"
+                ]
+            }
+        },
+        "menu": [
+            {
+                "path": "i18n:app.app",
+                "label": "i18n:app.create",
+                "message": "open-panel"
+            },
+            {
+                "path": "i18n:app.app",
+                "label": "i18n:app.refresh",
+                "message": "refresh-executor"
+            },
+            {
+                "path": "i18n:app.app",
+                "label": "i18n:app.help",
+                "message": "open-help"
+            },
+            {
+                "path": "i18n:app.app",
+                "label": "i18n:app.repository",
+                "message": "open-repository"
+            }
+        ],
+        "assets": {
+            "menu": {
+                "methods": "./engine/dist/menu/index.js",
+                "createMenu": "onCreateMenu",
+                "assetMenu": "onAssetMenu",
+                "dbMenu": "onDBMenu",
+                "panelMenu": "onPanelMenu"
+            }
+        }
+    },
+    "panels": {
+        "open-panel": {
+            "title": "创建",
+            "type": "dockable",
+            "main": "./engine/dist/panel",
+            "size": {
+                "min-width": 400,
+                "min-height": 300,
+                "width": 600,
+                "height": 600
+            }
+        }
+    },
+    "scripts": {
+        "build": "npm run --prefix ./engine build",
+        "watch": "npm run --prefix ./engine watch"
+    }
+}

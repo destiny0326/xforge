@@ -1,0 +1,52 @@
+<div class="content">
+    <ui-section header="输入" expand>
+        <ui-prop class="content-item">
+            <ui-label slot="label">类型</ui-label>
+            <ui-select id="type" slot="content" :value="typeSelectIndex"
+                @confirm="onChangeTypeSelect($event.target.value)">
+                <option :value="index" v-for="(name,index) in typeSelects">
+                    {{name}}
+                </option>
+            </ui-select>
+        </ui-prop>
+
+        <ui-prop class="content-item" v-show="showSelectGroup">
+            <ui-label slot="label">模版</ui-label>
+            <ui-select id="group" slot="content" :value="groupSelectIndex"
+                @confirm="onChangeGroupSelect($event.target.value)">
+                <option :value="index" v-for="(name,index) in groupSelects">
+                    {{name}}
+                </option>
+            </ui-select>
+        </ui-prop>
+
+        <ui-prop class="content-item" v-show="showSelectPage">
+            <ui-label slot="label">归属</ui-label>
+            <ui-select id="owner" slot="content" :value="pageSelectIndex"
+                @confirm="onChangePageSelect($event.target.value)">
+                <option :value="index" v-for="(name,index) in pageSelects">
+                    {{name}}
+                </option>
+            </ui-select>
+        </ui-prop>
+
+        <ui-prop class="content-item">
+            <ui-label slot="label">名字</ui-label>
+            <ui-input id="name" slot="content" placeholder="输入界面名字如: index" :value="inputName"
+                @change="inputName=$event.target.value" show-clear>
+            </ui-input>
+        </ui-prop>
+
+        <ui-button class="content-item" type="primary" @confirm="onClickCreate">
+            创建
+        </ui-button>
+    </ui-section>
+
+    <ui-section header="输出" expand>
+        <ui-label :value="display" style="white-space: pre"></ui-label>
+    </ui-section>
+
+    <div class="loading" v-show="showLoading">
+        <ui-loading class="loading-item"></ui-loading>
+    </div>
+</div>
