@@ -287,7 +287,13 @@ export default class BaseView extends Component {
             this.log('只有2D模式下才可以捕获焦点');
             return;
         }
-        this._captureFocus = value;
+
+        if (!EDITOR && this._captureFocus !== value) {
+            this._captureFocus = value;
+            Core.inst?.manager?.ui?.refreshShade();
+        } else {
+            this._captureFocus = value;
+        }
     }
 
     @property
