@@ -40,8 +40,10 @@ export default class UIMgrShade extends Component {
     private drawing = false;
     private timedown = 0;
 
-    private blurMaterial: Material = null;
     private normalFrame: SpriteFrame = null;
+
+    private blurMaterial: Material = null;
+    private blurFrame = new SpriteFrame();
 
     protected onLoad(): void {
         this.normalFrame = this.node.getComponent(Sprite).spriteFrame;
@@ -71,6 +73,7 @@ export default class UIMgrShade extends Component {
 
                 const size = this.node.getComponent(UITransform);
                 const renderTexture = new RenderTexture();
+                renderTexture.addRef();
                 renderTexture.reset({ width: size.width / 2, height: size.height / 2 });
 
                 cameraList.forEach(camera => {
@@ -81,10 +84,10 @@ export default class UIMgrShade extends Component {
                     camera.targetTexture = null;
                 });
 
-                const spriteFrame = new SpriteFrame();
-                spriteFrame.texture = renderTexture;
-                spriteFrame.flipUVY = true;
-                this.node.getComponent(Sprite).spriteFrame = spriteFrame;
+                this.blurFrame?.texture?.decRef();
+                this.blurFrame.texture = renderTexture;
+                this.blurFrame.flipUVY = true;
+                this.node.getComponent(Sprite).spriteFrame = this.blurFrame;
                 this.blurMaterial.setProperty('blurLevel', count === 0 ? 3 : 1);
 
                 if (count++ === 2) {
