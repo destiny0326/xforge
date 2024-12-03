@@ -18,18 +18,18 @@ export class Logger {
                 `background:${styleColor}; padding: 2px; border-radius: 5px 0 0 5px; border: 1px solid ${styleColor}; color: ${titleColor}; font-weight: normal;`,
                 `${title} ${new Date().toLocaleString()}`,
                 `background:#ffffff ; padding: 2px; border-radius: 0 5px 5px 0; border: 1px solid ${styleColor}; color: ${styleColor}; font-weight: normal;`
-            ) as ILog;
+            );
         }
         return window.console[level].bind(window.console,
             `${title} [${new Date().toLocaleString()}]`
-        ) as ILog;
+        );
     }
 
     /**
      * 用于输出一般信息
      */
     get log() {
-        return Logger.create('log', '#6495ed', '[LOG]', '#000');
+        return Logger.create('log', '#6495ed', '[LOG]', '#000') as ILog;
     }
 
     /**
@@ -37,28 +37,28 @@ export class Logger {
      */
 
     get warn() {
-        return Logger.create('warn', '#ff7f50', '[WARN]', '#000');
+        return Logger.create('warn', '#ff7f50', '[WARN]', '#000') as ILog;
     }
 
     /**
      * 用于输出错误信息
      */
     get error() {
-        return Logger.create('error', '#ff4757', '[ERROR]', '#000');
+        return Logger.create('error', '#ff4757', '[ERROR]', '#000') as ILog;
     }
 
     /**
      * 用于输出调试信息
      */
     get debug() {
-        return Logger.create('log', '#ff6347', '[DEBUG]', '#000');
+        return Logger.create('log', '#ff6347', '[DEBUG]', '#000') as ILog;
     }
 
     /**
      * 用于输出成功信息
      */
     get success() {
-        return Logger.create('log', '#00ae9d', '[SUCC]', '#000');
+        return Logger.create('log', '#00ae9d', '[SUCC]', '#000') as ILog;
     }
 }
 
