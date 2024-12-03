@@ -897,7 +897,10 @@ export default class BaseView extends Component {
 
     /**
      * 设置图片资源
-     * @param path UI的resources目录下的相对路径
+     * @param path UI的resources目录下的相对路径(必须以/spriteFrame结尾)
+     * 
+     * @example
+     * setSprite(sprite, 'img/a/spriteFrame', onComplete:(succ)=>{})
      */
     protected setSprite(target: Sprite, path: string, onComplete?: (success: boolean) => any) {
         this.loadRes(path, SpriteFrame, (spriteFrame) => {
