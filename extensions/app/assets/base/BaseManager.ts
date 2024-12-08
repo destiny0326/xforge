@@ -1,11 +1,11 @@
-import { AssetManager, Component, EventTarget, Prefab, Widget, _decorator, assetManager, error, find, instantiate, js, path, settings, warn } from 'cc';
+import { AssetManager, Component, EventTarget, Prefab, Widget, _decorator, assetManager, error, instantiate, js, path, settings, warn } from 'cc';
 import { DEBUG, DEV, EDITOR } from 'cc/env';
 import Core from '../Core';
 import { Logger } from '../lib/logger/logger';
 
 const { ccclass } = _decorator;
 
-const UserManagerRoot = 'Root2D/UserManager';
+const UserManagerPath = 'UserManager';
 const DontRewriteFuns = ['emit', 'on', 'once', 'off', 'targetOff'];
 
 const uuid = new class UUID {
@@ -167,49 +167,17 @@ export default class BaseManager extends Component {
 
     /***********************************静态***********************************/
     /**
-     * 将串式命名转成驼峰命名
-     * @param str 串式字符串
-     * @param lower 首字母是否小写(默认大写)
-     * @returns 
-     */
-    public static stringCase(str: string, lower = false) {
-        str = str.replace(/-/g, '_');
-        const arr = str.split('_');
-
-        return arr.map(function (str, index) {
-            if (index === 0 && lower) {
-                return str.charAt(0).toLocaleLowerCase() + str.slice(1);
-            }
-            return str.charAt(0).toLocaleUpperCase() + str.slice(1);
-        }).join('');
-    }
-
-    /**
-     * 将驼峰命名转成串式命名
-     * @param str 驼峰字符串
-     * @returns 
-     */
-    public static stringCaseNegate(str: string) {
-        return str.replace(/[A-Z]/g, (searchStr, startIndex) => {
-            if (startIndex === 0) {
-                return searchStr.toLocaleLowerCase();
-            } else {
-                return '-' + searchStr.toLocaleLowerCase();
-            }
-        });
-    }
-    /**
-     * manager asset bundle
-     */
-    private static bundle: AssetManager.Bundle = null;
-
-    /**
      * 系统内置manager的数量
      * @private
      */
     public static get sysMgrCount() {
         return 5;
     }
+
+    /**
+     * manager asset bundle
+     */
+    private static bundle: AssetManager.Bundle = null;
 
     /**
      * 初始化操作
@@ -319,7 +287,7 @@ export default class BaseManager extends Component {
 
         // 加载用户manager
         const loadUserMgrTask = Core.inst.lib.task.createASync();
-        const userManagerRoot = find(UserManagerRoot);
+        const UserManagerRoot = Core.Root2D.getChildByPath(UserManagerPath);
         urls.forEach(function (url) {
             loadUserMgrTask.add(function (next, retry) {
                 if (DEBUG) {
@@ -334,7 +302,7 @@ export default class BaseManager extends Component {
                             const endTime = window?.performance?.now ? performance.now() : Date.now();
                             loadFinish(`${managerName} 耗时:${(endTime - startTime).toFixed(6)} ms`);
                             const node = instantiate(prefab);
-                            node.parent = userManagerRoot;
+                            node.parent = UserManagerRoot;
                             node.active = true;
                             userMgrList.push(node.getComponent(BaseManager));
                             next();
@@ -348,7 +316,7 @@ export default class BaseManager extends Component {
                         retry(1);
                     } else {
                         const node = instantiate(prefab);
-                        node.parent = userManagerRoot;
+                        node.parent = UserManagerRoot;
                         node.active = true;
                         userMgrList.push(node.getComponent(BaseManager));
                         next();
