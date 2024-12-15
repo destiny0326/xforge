@@ -434,7 +434,7 @@ async function updateExecutor() {
     let ctrStr = '';
     ctrList.forEach(function (varname, index, array) {
         CtrStr += `${varname.slice(0, -10)}:typeof ${varname}`;
-        ctrStr += `${varname.slice(0, -10).toLocaleLowerCase()}:${varname}`;
+        ctrStr += `${varname.slice(0, -10).toLocaleLowerCase()}:IReadOnly<${varname}>`;
         if (index < array.length - 1) {
             CtrStr += ',';
             ctrStr += ',';
