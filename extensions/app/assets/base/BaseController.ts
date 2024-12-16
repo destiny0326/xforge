@@ -1,4 +1,5 @@
 import { DEV } from 'cc/env';
+import { IReadOnly } from '../../../../assets/app-builtin/app-admin/executor';
 import { Logger } from '../lib/logger/logger';
 
 class CallbackInfo {
@@ -180,7 +181,6 @@ class SuperBaseController<T extends { [key in string]?: AnyFunc }> {
     }
 }
 
-type IReadOnly<T> = { readonly [P in keyof T]: T[P] extends Function ? T[P] : (T[P] extends Object ? IReadOnly<T[P]> : T[P]); };
 export default function BaseController<C, T extends { [key in string]?: AnyFunc } = any>() {
     return class BaseController extends SuperBaseController<T> {
         /**
