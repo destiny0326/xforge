@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { Component } from 'cc';
 import { app } from '../../app/app';
-import { DEV,EDITOR } from 'cc/env';
+import { EDITOR,EDITOR_NOT_IN_PREVIEW } from 'cc/env';
 
 import EventManager from '../../../extensions/app/assets/manager/event/EventManager'
 import LoaderManager from '../../../extensions/app/assets/manager/loader/LoaderManager'
@@ -26,11 +26,12 @@ export type IMusicNames = IMusicName[]
 export type IEffectName = "never"
 export type IEffectNames = IEffectName[]
 
-if(!EDITOR||DEV) Object.assign(app.Controller, {})
-if(!EDITOR||DEV) Object.assign(app.controller, {})
-if(!EDITOR||DEV) Object.assign(app.data, {})
-if(!EDITOR||DEV) Object.assign(app.config, {})
-if(!EDITOR||DEV) Object.assign(app.store, {})
+if(!EDITOR||!EDITOR_NOT_IN_PREVIEW) Object.assign(app.config, {})
+if(!EDITOR||!EDITOR_NOT_IN_PREVIEW) Object.assign(app.data, {})
+if(!EDITOR||!EDITOR_NOT_IN_PREVIEW) Object.assign(app.store, {})
+
+if(!EDITOR||!EDITOR_NOT_IN_PREVIEW) Object.assign(app.Controller, {})
+if(!EDITOR||!EDITOR_NOT_IN_PREVIEW) Object.assign(app.controller, {})
 
 export type IReadOnly<T> = { readonly [P in keyof T]: T[P] extends Function ? T[P] : (T[P] extends Object ? IReadOnly<T[P]> : T[P]); };
 export type IApp = {
