@@ -688,12 +688,13 @@ export default class UIManager<UIName extends string, MiniName extends string> e
     /**
      * 预加载ui内部资源
      */
-    public preloadRes<T extends typeof Asset>(target: Component | UIName | MiniName, path: string, type: T) {
+    public preloadRes<T extends typeof Asset>(target: Component | UIName | MiniName, path: string, type: T, complete?: (item: AssetManager.RequestItem[] | null) => any) {
         if (typeof target === 'string') {
             Core.inst.manager.loader.preload({
                 bundle: this.getResBundleName(target),
                 path: path,
-                type: type
+                type: type,
+                onComplete: complete
             });
         } else {
             const view = this.getBaseView(target.node) || this.getViewInParents(target.node) || this.getViewInChildren(director.getScene());
@@ -701,7 +702,8 @@ export default class UIManager<UIName extends string, MiniName extends string> e
                 Core.inst.manager.loader.preload({
                     bundle: this.getResBundleName(view.viewName as UIName | MiniName),
                     path: path,
-                    type: type
+                    type: type,
+                    onComplete: complete
                 });
             } else {
                 this.error('preloadRes', target.name, path);
@@ -739,12 +741,13 @@ export default class UIManager<UIName extends string, MiniName extends string> e
     /**
      * 预加载ui内部资源
      */
-    public preloadResDir<T extends typeof Asset>(target: Component | UIName | MiniName, path: string, type: T) {
+    public preloadResDir<T extends typeof Asset>(target: Component | UIName | MiniName, path: string, type: T, complete?: (item: AssetManager.RequestItem[] | null) => any) {
         if (typeof target === 'string') {
             Core.inst.manager.loader.preloadDir({
                 bundle: this.getResBundleName(target),
                 path: path,
-                type: type
+                type: type,
+                onComplete: complete
             });
         } else {
             const view = this.getBaseView(target.node) || this.getViewInParents(target.node) || this.getViewInChildren(director.getScene());
@@ -752,7 +755,8 @@ export default class UIManager<UIName extends string, MiniName extends string> e
                 Core.inst.manager.loader.preloadDir({
                     bundle: this.getResBundleName(view.viewName as UIName | MiniName),
                     path: path,
-                    type: type
+                    type: type,
+                    onComplete: complete
                 });
             } else {
                 this.error('preloadResDir', target.name, path);
