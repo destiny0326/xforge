@@ -1,4 +1,4 @@
-import { Asset, AssetManager, Font, Label, SceneAsset, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, sp } from 'cc';
+import { Asset, AssetManager, Font, JsonAsset, Label, SceneAsset, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, sp } from 'cc';
 import BaseManager from '../../base/BaseManager';
 const { ccclass } = _decorator;
 
@@ -214,6 +214,45 @@ export default class LoaderManager extends BaseManager {
         if (!bundle) bundle = 'resources';
         const b = assetManager.getBundle(bundle);
         if (b) assetManager.removeBundle(b);
+    }
+
+    /**
+     * 重载一个bundle(只重载资源列表)
+     */
+    public reloadBundle({ bundle, version, onComplete }: { bundle?: string, version?: string, onComplete?: (bundle: AssetManager.Bundle | null) => any }) {
+        const suffix = version ? `${version}.` : '';
+        const baseUrl = `${assetManager.downloader.remoteServerAddress}remote/${bundle}/`;
+        const configUrl = `${baseUrl}config.${suffix}json`;
+
+        // 清除可能存在的config缓存
+        assetManager.cacheManager?.removeCache(configUrl);
+        assetManager.loadRemote(configUrl, (err: Error, data: JsonAsset) => {
+            if (err) {
+                onComplete?.(null);
+                return;
+            }
+
+            this.releaseAll(bundle);
+            this.removeBundle(bundle);
+
+            const ab = new AssetManager.Bundle();
+            const config = data.json as any;
+            config.base = baseUrl;
+            ab.init(config);
+            onComplete?.(ab);
+        });
+    }
+
+    /**
+     * 重载一个bundle(只重载资源列表)
+     */
+    public reloadBundleAsync(params: { bundle?: string, version?: string }): Promise<AssetManager.Bundle | null> {
+        return new Promise((resolve) => {
+            this.reloadBundle({
+                ...params,
+                onComplete: resolve
+            });
+        });
     }
 
     /**
