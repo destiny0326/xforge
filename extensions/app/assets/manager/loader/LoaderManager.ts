@@ -1,4 +1,4 @@
-import { Asset, AssetManager, Font, JsonAsset, Label, SceneAsset, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, sp } from 'cc';
+import { Asset, AssetManager, Font, ImageAsset, JsonAsset, Label, SceneAsset, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, sp } from 'cc';
 import BaseManager from '../../base/BaseManager';
 const { ccclass } = _decorator;
 
@@ -301,23 +301,43 @@ export default class LoaderManager extends BaseManager {
      * 
      * @example
      * setFont({target:label, path:'font/num', bundle:'resources', onComplete:(succ)=>{}})
+     * setFont({target:label, url:'http://img/a/font',ext:'.ttf', onComplete:(succ)=>{}})
      */
-    public setFont(params: { target: Label, path: string, bundle?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }) {
-        this.load({
-            path: params.path,
-            bundle: params.bundle,
-            type: Font,
-            onComplete: (font) => {
-                if (!font || !isValid(params.target)) {
-                    params.onFail && params.onFail();
-                    params.onComplete && params.onComplete(false);
-                    return;
+    public setFont(params: { target: Label, url: string, ext?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }): void;
+    public setFont(params: { target: Label, path: string, bundle?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }): void;
+    public setFont(params: { target: Label, path?: string, bundle?: string, url?: string, ext?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }) {
+        if (params.url) {
+            this.loadRemote({
+                url: params.url,
+                ext: params.ext,
+                onComplete: (font: Font) => {
+                    if (!font || !isValid(params.target)) {
+                        params.onFail && params.onFail();
+                        params.onComplete && params.onComplete(false);
+                        return;
+                    }
+                    params.target.font = font;
+                    params.onSuccess && params.onSuccess();
+                    params.onComplete && params.onComplete(true);
                 }
-                params.target.font = font;
-                params.onSuccess && params.onSuccess();
-                params.onComplete && params.onComplete(true);
-            }
-        });
+            });
+        } else {
+            this.load({
+                path: params.path,
+                bundle: params.bundle,
+                type: Font,
+                onComplete: (font) => {
+                    if (!font || !isValid(params.target)) {
+                        params.onFail && params.onFail();
+                        params.onComplete && params.onComplete(false);
+                        return;
+                    }
+                    params.target.font = font;
+                    params.onSuccess && params.onSuccess();
+                    params.onComplete && params.onComplete(true);
+                }
+            });
+        }
     }
 
     /**
@@ -353,22 +373,43 @@ export default class LoaderManager extends BaseManager {
      * 
      * @example
      * setSprite({target:sprite, path:'img/a/spriteFrame', bundle:'resources', onComplete:(succ)=>{}})
+     * setSprite({target:sprite, url:'http://img/a/avatar',ext:'.png', onComplete:(succ)=>{}})
      */
-    public setSprite(params: { target: Sprite, path: string, bundle?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }) {
-        this.load({
-            path: params.path,
-            bundle: params.bundle,
-            type: SpriteFrame,
-            onComplete: (spriteFrame) => {
-                if (!spriteFrame || !isValid(params.target)) {
-                    params.onFail && params.onFail();
-                    params.onComplete && params.onComplete(false);
-                    return;
+    public setSprite(params: { target: Sprite, url: string, ext?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }): void;
+    public setSprite(params: { target: Sprite, path: string, bundle?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }): void;
+    public setSprite(params: { target: Sprite, path?: string, bundle?: string, url?: string, ext?: string, onComplete?: (success: boolean) => any, onSuccess?: () => void, onFail?: () => void }) {
+        if (params.url) {
+            this.loadRemote({
+                url: params.url,
+                ext: params.ext,
+                onComplete: (imageAsset: ImageAsset) => {
+                    if (!imageAsset || !isValid(params.target)) {
+                        params.onFail && params.onFail();
+                        params.onComplete && params.onComplete(false);
+                        return;
+                    }
+                    const spriteFrame = SpriteFrame.createWithImage(imageAsset);
+                    params.target.spriteFrame = spriteFrame;
+                    params.onSuccess && params.onSuccess();
+                    params.onComplete && params.onComplete(true);
                 }
-                params.target.spriteFrame = spriteFrame;
-                params.onSuccess && params.onSuccess();
-                params.onComplete && params.onComplete(true);
-            }
-        });
+            });
+        } else {
+            this.load({
+                path: params.path,
+                bundle: params.bundle,
+                type: SpriteFrame,
+                onComplete: (spriteFrame) => {
+                    if (!spriteFrame || !isValid(params.target)) {
+                        params.onFail && params.onFail();
+                        params.onComplete && params.onComplete(false);
+                        return;
+                    }
+                    params.target.spriteFrame = spriteFrame;
+                    params.onSuccess && params.onSuccess();
+                    params.onComplete && params.onComplete(true);
+                }
+            });
+        }
     }
 }
