@@ -1,4 +1,5 @@
 import { Asset, AssetManager, Font, ImageAsset, JsonAsset, Label, SceneAsset, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, sp } from 'cc';
+import { MINIGAME } from 'cc/env';
 import BaseManager from '../../base/BaseManager';
 const { ccclass } = _decorator;
 
@@ -173,9 +174,17 @@ export default class LoaderManager extends BaseManager {
     public loadBundle({ bundle, version, onComplete }: { bundle?: string, version?: string, onComplete?: (bundle: AssetManager.Bundle | null) => any }) {
         if (!bundle) bundle = 'resources';
         if (version) {
-            assetManager.loadBundle(bundle, { version }, (err: Error, bundle: AssetManager.Bundle) => {
-                onComplete && onComplete(err ? null : bundle);
-            });
+            if (MINIGAME) {
+                // 由于小游戏环境下如果指定的version与本地version不一致，Cocos内部的下载逻辑会出错
+                assetManager.loadBundle(bundle, (err: Error, b: AssetManager.Bundle) => {
+                    if (err || !b) return onComplete?.(null);
+                    this.reloadBundle({ bundle, version, onComplete });
+                });
+            } else {
+                assetManager.loadBundle(bundle, { version }, (err: Error, bundle: AssetManager.Bundle) => {
+                    onComplete && onComplete(err ? null : bundle);
+                });
+            }
         } else {
             assetManager.loadBundle(bundle, (err: Error, bundle: AssetManager.Bundle) => {
                 onComplete && onComplete(err ? null : bundle);
@@ -218,6 +227,7 @@ export default class LoaderManager extends BaseManager {
 
     /**
      * 重载一个bundle(只重载资源列表)
+     * - 如果仅仅需要下载bundle的资源列表而不需要脚本，也可以使用此方法
      */
     public reloadBundle({ bundle, version, onComplete }: { bundle?: string, version?: string, onComplete?: (bundle: AssetManager.Bundle | null) => any }) {
         const suffix = version ? `${version}.` : '';
@@ -245,6 +255,7 @@ export default class LoaderManager extends BaseManager {
 
     /**
      * 重载一个bundle(只重载资源列表)
+     * - 如果仅仅需要下载bundle的资源列表而不需要脚本，也可以使用此方法
      */
     public reloadBundleAsync(params: { bundle?: string, version?: string }): Promise<AssetManager.Bundle | null> {
         return new Promise((resolve) => {
