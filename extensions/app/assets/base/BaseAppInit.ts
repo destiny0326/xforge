@@ -48,7 +48,7 @@ export default abstract class BaseAppInit extends Component {
      */
     protected startInit() {
         const projectBundles = settings.querySettings(Settings.Category.ASSETS, 'projectBundles') as string[];
-        Core.inst.lib.task.createAny()
+        return Core.inst.lib.task.createAny()
             // 预加载control、model、admin、manager
             .add([
                 (next, retry) => {
