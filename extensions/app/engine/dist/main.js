@@ -503,11 +503,15 @@ exports.methods = {
     ['open-panel']() {
         Editor.Panel.open('app.open-panel');
     },
-    ['open-help']() {
+    ['open-wiki']() {
         const url = 'https://gitee.com/cocos2d-zp/xforge/wikis/pages';
         Editor.Message.send('program', 'open-url', url);
     },
-    ['open-repository']() {
+    ['open-issues']() {
+        const url = 'https://gitee.com/cocos2d-zp/xforge/issues';
+        Editor.Message.send('program', 'open-url', url);
+    },
+    ['open-github']() {
         const url = 'https://github.com/a1076559139/XForge';
         Editor.Message.send('program', 'open-url', url);
     },
