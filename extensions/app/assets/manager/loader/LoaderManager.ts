@@ -183,16 +183,26 @@ export default class LoaderManager extends BaseManager {
 
     private _loadBundleInternal(bundle: string, onComplete?: (bundle: AssetManager.Bundle | null) => any) {
         if (this._dependencies[bundle]) {
-            let deps = [];
-            for (const dep of this._dependencies[bundle]) {
-                deps.push((next)=>{
-                    this._loadOneBundle(dep, next);
+            let deps = this._dependencies[bundle];
+            let preloads = [];
+            for (const dep of deps) {
+                preloads.push((next, retry)=>{
+                    assetManager.preloadAny({ url: dep }, { ext: 'bundle' }, null, (err) => {
+                        if (err) return retry(0.1);
+                        next();
+                    });
                 })
             }
             let task = Core.inst.lib.task.createAny();
-            task.add(deps).start(()=>{
+            task.add(preloads);
+            for (const dep of deps) {
+                task.add((next)=>{
+                    this._loadOneBundle(dep, next);
+                });
+            }
+            task.start(()=>{
                 this._loadOneBundle(bundle, onComplete);
-            })
+            });
         } else {
             this._loadOneBundle(bundle, onComplete);
         }
