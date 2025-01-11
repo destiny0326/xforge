@@ -7,7 +7,7 @@ export const throwError = true;
 
 export const onAfterBuild: BuildHook.onAfterBuild = async function (options, result) {
     // 管理Bundle间的依赖关系，确保Bundle中脚本加载顺序
-    resaveAllBundleDependencies(result.dest, options.moveRemoteBundleScript);
+    resaveAllBundleDependencies(result.dest, options.moveRemoteBundleScript || options.platform == 'wechatgame');
 
     if (options.platform !== 'web-mobile' && options.platform !== 'web-desktop') {
         return;

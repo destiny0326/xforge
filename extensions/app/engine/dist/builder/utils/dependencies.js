@@ -29,6 +29,31 @@ const settingsFileReg = /^settings\.(\w+\.)?json$/g;
 const jsRegisterReg = /^\s*System.register\(\s*[\"\'](.*?)[\"\']\s*,\s*\[\s*(.*?)\]\s*,/;
 const jsChunkNameReg = /^chunks:\/\/\/_virtual\/(.*)$/;
 const ignoreJsDepends = ['cc', 'cc/env', './rollupPluginModLoBabelHelpers.js'];
+function deleteDirIfExist(dir) {
+    if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+        console.log(`removed dir: ${dir} as it's not been depended`);
+    }
+}
+function excludeBundle(name, settings, dir) {
+    let projectBundles = settings.assets.projectBundles;
+    projectBundles.splice(projectBundles.indexOf(name), 1);
+    let remotes = settings.assets.remoteBundles;
+    if (remotes.indexOf(name) !== -1) {
+        remotes.splice(remotes.indexOf(name), 1);
+        deleteDirIfExist(path_1.default.join(dir, "remote", name));
+        deleteDirIfExist(path_1.default.join(dir, "src", "bundle-scripts", name));
+    }
+    let subpackages = settings.assets.subpackages;
+    if (subpackages.indexOf(name) !== -1) {
+        subpackages.splice(subpackages.indexOf(name), 1);
+        deleteDirIfExist(path_1.default.join(dir, "subpackages", name));
+    }
+    deleteDirIfExist(path_1.default.join(dir, "assets", name));
+    if (settings.assets.bundleVers[name]) {
+        delete settings.assets.bundleVers[name];
+    }
+}
 function findSettingFile(srcPath) {
     const files = fs.readdirSync(srcPath);
     for (const file of files) {
@@ -83,14 +108,15 @@ function resaveAllBundleDependencies(dstPath, scriptMoved) {
     let deps = new Map();
     let jsBundles = new Map();
     let bundleImports = new Map();
+    let autoExcludeBundles = [];
     for (const name of allBundles) {
         const bundleVersion = md5Bundles.indexOf(name) !== -1 ? bundleVers[name] : undefined;
         const isRemote = remoteBundles.indexOf(name) !== -1;
         const isSubpackage = subpackages.indexOf(name) !== -1;
-        const jsonFile = path_1.default.join(dstPath, isRemote ? (isSubpackage ? 'subpackages' : 'remote') : 'assets', name, bundleVersion ? `config.${bundleVersion}.json` : 'config.json');
+        const jsonFile = path_1.default.join(dstPath, isSubpackage ? 'subpackages' : (isRemote ? 'remote' : 'assets'), name, bundleVersion ? `config.${bundleVersion}.json` : 'config.json');
         const config = JSON.parse(fs.readFileSync(jsonFile, 'utf-8'));
         deps.set(name, new Set(config.deps));
-        const jsFile = path_1.default.join(dstPath, isRemote ? (isSubpackage ? 'subpackages' : (scriptMoved ? 'src/bundle-scripts' : 'remote')) : 'assets', name, isSubpackage ? 'game.js' : (bundleVersion ? `index.${bundleVersion}.js` : 'index.js'));
+        const jsFile = path_1.default.join(dstPath, isSubpackage ? 'subpackages' : (isRemote ? (scriptMoved ? 'src/bundle-scripts' : 'remote') : 'assets'), name, isSubpackage ? 'game.js' : (bundleVersion ? `index.${bundleVersion}.js` : 'index.js'));
         const lines = fs.readFileSync(jsFile, 'utf-8').split(/\r?\n/);
         let allImports = new Set();
         for (const line of lines) {
@@ -129,6 +155,9 @@ function resaveAllBundleDependencies(dstPath, scriptMoved) {
         const bundleName = (_a = userData['bundleName']) !== null && _a !== void 0 ? _a : name;
         if (allBundles.indexOf(bundleName) === -1)
             return;
+        if (userData['auto_exclude']) {
+            autoExcludeBundles.push(bundleName);
+        }
         const exts = userData['dep_ext'];
         if (!exts)
             return;
@@ -187,6 +216,19 @@ function resaveAllBundleDependencies(dstPath, scriptMoved) {
         throw new Error('存在循环依赖，请检查依赖关系！' + JSON.stringify(data));
     }
     settings.assets['dependencies'] = data;
+    // 排除所有未被依赖且自动排除的Bundle
+    for (const name of autoExcludeBundles) {
+        let isDep = false;
+        for (const set of deps.values()) {
+            if (set.has(name)) {
+                isDep = true;
+                break;
+            }
+        }
+        if (!isDep) {
+            excludeBundle(name, settings, dstPath);
+        }
+    }
     fs.writeFileSync(file, JSON.stringify(settings));
 }
 exports.resaveAllBundleDependencies = resaveAllBundleDependencies;

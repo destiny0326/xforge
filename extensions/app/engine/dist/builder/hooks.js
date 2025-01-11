@@ -10,7 +10,7 @@ const dependencies_1 = require("./utils/dependencies");
 exports.throwError = true;
 const onAfterBuild = async function (options, result) {
     // 管理Bundle间的依赖关系，确保Bundle中脚本加载顺序
-    dependencies_1.resaveAllBundleDependencies(result.dest, options.moveRemoteBundleScript);
+    dependencies_1.resaveAllBundleDependencies(result.dest, options.moveRemoteBundleScript || options.platform == 'wechatgame');
     if (options.platform !== 'web-mobile' && options.platform !== 'web-desktop') {
         return;
     }

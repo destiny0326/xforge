@@ -7,6 +7,33 @@ const jsRegisterReg = /^\s*System.register\(\s*[\"\'](.*?)[\"\']\s*,\s*\[\s*(.*?
 const jsChunkNameReg = /^chunks:\/\/\/_virtual\/(.*)$/;
 const ignoreJsDepends = ['cc', 'cc/env', './rollupPluginModLoBabelHelpers.js'];
 
+function deleteDirIfExist(dir: string): void {
+    if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+        console.log(`removed dir: ${dir} as it's not been depended`)
+    }
+}
+
+function excludeBundle(name: string, settings: IOutputSettings, dir: string): void {
+    let projectBundles = settings.assets.projectBundles;
+    projectBundles.splice(projectBundles.indexOf(name), 1);
+    let remotes = settings.assets.remoteBundles;
+    if (remotes.indexOf(name) !== -1) {
+        remotes.splice(remotes.indexOf(name), 1);
+        deleteDirIfExist(path.join(dir, "remote", name));
+        deleteDirIfExist(path.join(dir, "src", "bundle-scripts", name));
+    }
+    let subpackages = settings.assets.subpackages;
+    if (subpackages.indexOf(name) !== -1) {
+        subpackages.splice(subpackages.indexOf(name), 1);
+        deleteDirIfExist(path.join(dir, "subpackages", name));
+    }
+    deleteDirIfExist(path.join(dir, "assets", name));
+    if (settings.assets.bundleVers[name]) {
+        delete settings.assets.bundleVers[name];
+    }
+}
+
 function findSettingFile(srcPath: string): string {
     const files = fs.readdirSync(srcPath);
     for (const file of files) {
@@ -66,12 +93,13 @@ export function resaveAllBundleDependencies(dstPath:string, scriptMoved: boolean
     let deps: Map<string, Set<string>> = new Map();
     let jsBundles: Map<string, string> = new Map();
     let bundleImports: Map<string, Set<string>> = new Map();
+    let autoExcludeBundles: string[] = [];
     for (const name of allBundles) {
         const bundleVersion = md5Bundles.indexOf(name) !== -1 ? bundleVers[name]: undefined;
         const isRemote = remoteBundles.indexOf(name) !== -1;
         const isSubpackage = subpackages.indexOf(name) !== -1;
         const jsonFile = path.join(dstPath
-            , isRemote ? (isSubpackage ? 'subpackages' : 'remote') : 'assets'
+            , isSubpackage ? 'subpackages' : (isRemote ? 'remote' : 'assets')
             , name
             , bundleVersion ? `config.${bundleVersion}.json` : 'config.json'
         );
@@ -79,7 +107,7 @@ export function resaveAllBundleDependencies(dstPath:string, scriptMoved: boolean
         deps.set(name, new Set(config.deps));
 
         const jsFile = path.join(dstPath
-            , isRemote ? (isSubpackage ? 'subpackages' : (scriptMoved ? 'src/bundle-scripts' : 'remote')) : 'assets'
+            , isSubpackage ? 'subpackages' : (isRemote ? (scriptMoved ? 'src/bundle-scripts' : 'remote') : 'assets')
             , name
             , isSubpackage ? 'game.js' : (bundleVersion ? `index.${bundleVersion}.js` : 'index.js')
         );
@@ -117,6 +145,9 @@ export function resaveAllBundleDependencies(dstPath:string, scriptMoved: boolean
         if (!userData || !userData['isBundle']) return;
         const bundleName = userData['bundleName'] ?? name;
         if (allBundles.indexOf(bundleName) === -1) return;
+        if (userData['auto_exclude']) {
+            autoExcludeBundles.push(bundleName);
+        }
         const exts: string = userData['dep_ext'];
         if (!exts) return;
         for (const n of exts.split(',')) {
@@ -175,5 +206,20 @@ export function resaveAllBundleDependencies(dstPath:string, scriptMoved: boolean
     }
 
     settings.assets['dependencies'] = data;
+
+    // 排除所有未被依赖且自动排除的Bundle
+    for (const name of autoExcludeBundles) {
+        let isDep = false;
+        for (const set of deps.values()) {
+            if (set.has(name)) {
+                isDep = true;
+                break;
+            }
+        }
+        if (!isDep) {
+            excludeBundle(name, settings, dstPath);
+        }
+    }
+    
     fs.writeFileSync(file, JSON.stringify(settings));
 }

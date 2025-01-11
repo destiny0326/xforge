@@ -8,15 +8,21 @@ exports.$ = {
     'section': '#section',
     'deps': '#deps',
     'depsInput': '#depsInput',
+    'autoExclude': '#autoExclude',
 };
 // 添加bundle的自定义依赖，不知道怎么使用list引用 Assets，先用input代替
 exports.template = `
-<ui-section id="deps" header="依赖Bundle扩展" expand>
+<ui-section id="deps" header="Bundle依赖扩展" expand>
+    <ui-prop>
+        <ui-label slot="label" tooltips="选中时，若无外部Bundle依赖该Bundle，则自动排除">是否自动排除</ui-label>
+        <ui-checkbox slot="content" id="autoExclude"></ui-checkbox>
+    </ui-prop>
     <!--ui-button @click="addDependency">添加资源</ui-button-->
     <!--ui-list id="list" v-for="(dep, index) in extDepList" :key="index">
         <ui-item>{{ dep }}</ui-item>
         <ui-button @click="removeDependency(index)">删除</ui-button>
     </ui-list-->
+    <ui-label>输入额外依赖的Assets Bundle</ui-label>
     <ui-input id="depsInput" tooltip="有多个依赖包时使用逗号隔开"></ui-input>
 </ui-section>
 <ui-section id="section" header="文件夹说明" expand>
@@ -24,7 +30,7 @@ exports.template = `
 </ui-section>
 `;
 function update(assetList, metaList) {
-    var _a;
+    var _a, _b;
     this.assetList = assetList;
     this.metaList = metaList;
     if (assetList.length === 0) {
@@ -60,6 +66,8 @@ function update(assetList, metaList) {
             input.value = (_a = meta.userData['dep_ext']) !== null && _a !== void 0 ? _a : "";
             this.currentUrl = assetList[0].url;
             this.currentMeta = meta;
+            const checkBox = this.$.autoExclude;
+            checkBox.value = (_b = meta.userData['auto_exclude']) !== null && _b !== void 0 ? _b : false;
         }
         else {
             input.value = '';
@@ -79,6 +87,11 @@ function ready() {
             return;
         const input = this.$.depsInput;
         this.currentMeta.userData['dep_ext'] = input.value;
+    });
+    this.$.autoExclude.addEventListener('confirm', () => {
+        if (!this.currentMeta)
+            return;
+        this.currentMeta.userData['auto_exclude'] = !this.currentMeta.userData['auto_exclude'] ? true : undefined;
     });
 }
 exports.ready = ready;
