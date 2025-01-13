@@ -1,11 +1,19 @@
-import { Asset, AssetManager, Font, ImageAsset, JsonAsset, Label, SceneAsset, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, path, sp } from 'cc';
+import { Asset, AssetManager, Font, ImageAsset, JsonAsset, Label, SceneAsset, Settings, Sprite, SpriteFrame, Texture2D, TextureCube, _decorator, assetManager, isValid, path, settings, sp } from 'cc';
 import { MINIGAME } from 'cc/env';
 import BaseManager from '../../base/BaseManager';
+import Core from '../../Core';
 const { ccclass } = _decorator;
 const REGEX = /^https?:\/\/.*/;
 
 @ccclass('LoaderManager')
 export default class LoaderManager extends BaseManager {
+    private _dependencies: {[key: string]: string[]};
+
+    protected init(finish?: Function): void {
+        const dependencies = settings.querySettings(Settings.Category.ASSETS, 'dependencies') ?? {} as any;
+        this._dependencies = dependencies;
+        super.init(finish);
+    }
 
     private handle(handle: string, { bundle, version, path, type, onProgress, onComplete }: { bundle?: string, version?: string, path: string, type?: typeof Asset, onProgress?: (finish: number, total: number, item: AssetManager.RequestItem) => void, onComplete?: (result: unknown | null) => void }) {
         if (!handle) {
@@ -167,6 +175,39 @@ export default class LoaderManager extends BaseManager {
         assetManager.getBundle(bundle)?.releaseUnusedAssets();
     }
 
+    private _loadOneBundle(bundle: string, onComplete?: (bundle: AssetManager.Bundle | null) => any) {
+        assetManager.loadBundle(bundle, (err: Error, result: AssetManager.Bundle) => {
+            onComplete && onComplete(err ? null : result);
+        });
+    }
+
+    private _loadBundleInternal(bundle: string, onComplete?: (bundle: AssetManager.Bundle | null) => any) {
+        if (this._dependencies[bundle]) {
+            let deps = this._dependencies[bundle];
+            let preloads = [];
+            for (const dep of deps) {
+                preloads.push((next, retry)=>{
+                    assetManager.preloadAny({ url: dep }, { ext: 'bundle' }, null, (err) => {
+                        if (err) return retry(0.1);
+                        next();
+                    });
+                })
+            }
+            let task = Core.inst.lib.task.createAny();
+            task.add(preloads);
+            for (const dep of deps) {
+                task.add((next)=>{
+                    this._loadOneBundle(dep, next);
+                });
+            }
+            task.start(()=>{
+                this._loadOneBundle(bundle, onComplete);
+            });
+        } else {
+            this._loadOneBundle(bundle, onComplete);
+        }
+    }
+
     /**
      * 加载一个bundle
      * @param params.bundle 默认为resources, 可以是项目中的bundle名，也可以是远程bundle的url(url末位作为bundle名)，参考https://docs.cocos.com/creator/manual/zh/asset/bundle.html#%E5%8A%A0%E8%BD%BD-asset-bundle
@@ -187,6 +228,7 @@ export default class LoaderManager extends BaseManager {
             // 1. 指定的version与本地version不一致
             // 2. 是远程bundle本地不存在
             if (version && assetManager.downloader.bundleVers[bundle] !== version) {
+                // 带版本号的不处理依赖关题 TODO？
                 // 这里需要先加载bundle触发内部的一些初始化逻辑(主要是缓存相关的初始化)
                 assetManager.loadBundle(bundle, (err: Error, b: AssetManager.Bundle) => {
                     if (err || !b) return onComplete?.(null);
@@ -194,21 +236,18 @@ export default class LoaderManager extends BaseManager {
                     this.reloadBundle({ bundle, version, onComplete });
                 });
             } else {
-                assetManager.loadBundle(bundle, (err: Error, bundle: AssetManager.Bundle) => {
-                    onComplete && onComplete(err ? null : bundle);
-                });
+                this._loadBundleInternal(bundle, onComplete);
             }
             return;
         }
 
         if (version) {
+            // 带版本号的不处理依赖关题 TODO？
             assetManager.loadBundle(bundle, { version }, (err: Error, bundle: AssetManager.Bundle) => {
                 onComplete && onComplete(err ? null : bundle);
             });
         } else {
-            assetManager.loadBundle(bundle, (err: Error, bundle: AssetManager.Bundle) => {
-                onComplete && onComplete(err ? null : bundle);
-            });
+            this._loadBundleInternal(bundle, onComplete);
         }
     }
 

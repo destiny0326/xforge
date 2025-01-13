@@ -1,4 +1,4 @@
-import { Button, Component, EventTouch, Node, Settings, _decorator, assetManager, isValid, settings, warn } from 'cc';
+import { Button, Component, EventTouch, ForwardFlow, Node, Settings, _decorator, assetManager, isValid, settings, warn } from 'cc';
 import { EDITOR } from 'cc/env';
 import Core from '../Core';
 import BaseManager from './BaseManager';
@@ -48,52 +48,57 @@ export default abstract class BaseAppInit extends Component {
      */
     protected startInit() {
         const projectBundles = settings.querySettings(Settings.Category.ASSETS, 'projectBundles') as string[];
-        Core.inst.lib.task.createAny()
-            // 预加载control、model、admin、manager
-            .add([
-                (next, retry) => {
-                    // 预加载control(废弃)
-                    if (projectBundles.indexOf(ControlBundleName) === -1) return next();
-                    assetManager.preloadAny({ url: ControlBundleName }, { ext: 'bundle' }, null, (err) => {
-                        if (err) return retry(0.1);
-                        next();
-                    });
-                },
-                (next, retry) => {
-                    // 预加载controller
-                    if (projectBundles.indexOf(ControllerBundleName) === -1) return next();
-                    assetManager.preloadAny({ url: ControllerBundleName }, { ext: 'bundle' }, null, (err) => {
-                        if (err) return retry(0.1);
-                        next();
-                    });
-                },
-                (next, retry) => {
-                    // 预加载model
-                    if (projectBundles.indexOf(ModelBundleName) === -1) return next();
-                    assetManager.preloadAny({ url: ModelBundleName }, { ext: 'bundle' }, null, (err) => {
-                        if (err) return retry(0.1);
-                        next();
-                    });
-                },
-                (next, retry) => {
-                    // 预加载admin
-                    if (projectBundles.indexOf(AdminBundleName) === -1) return next();
-                    assetManager.preloadAny({ url: AdminBundleName }, { ext: 'bundle' }, null, (err) => {
-                        if (err) return retry(0.1);
-                        next();
-                    });
-                },
-                (next, retry) => {
-                    // 预加载manage
-                    if (projectBundles.indexOf(ManagerBundleName) === -1) return next();
-                    assetManager.preloadAny({ url: ManagerBundleName }, { ext: 'bundle' }, null, (err) => {
-                        if (err) return retry(0.1);
-                        next();
-                    });
+        const dependencies = settings.querySettings(Settings.Category.ASSETS, 'dependencies') ?? {} as any;
+        const appBundles = [ControlBundleName, ControllerBundleName, ModelBundleName, AdminBundleName, ManagerBundleName];
+        let preloadBundles = new Set<string>();
+        let depBundles = new Set<string>();
+        // 统计所有预加载Bundle，加入被依赖的包
+        for (const name of appBundles) {
+            if (projectBundles.indexOf(name) === -1) continue;
+            preloadBundles.add(name);
+            if (dependencies[name]) {
+                for (const dep of dependencies[name]) {
+                    depBundles.add(dep);
+                    preloadBundles.add(dep);
                 }
-            ])
-            // 加载control(废弃)
-            .add((next, retry) => {
+            }
+        }
+        let preloads = [];
+        for (const name of preloadBundles) {
+            preloads.push((next, retry)=>{
+                assetManager.preloadAny({ url: name }, { ext: 'bundle' }, null, (err) => {
+                    if (err) return retry(0.1);
+                    next();
+                });
+            })
+        }
+        
+        let task = Core.inst.lib.task.createAny();
+        task.add(preloads);  // 先预加载所有包
+
+        // 然后按序加载所有依赖包
+        let deps: string[] = [];
+        for (const dep of depBundles) {
+            deps.push(dep);
+        }
+        deps.sort((a: string, b: string)=>{
+            if (!dependencies[a]) return -1;
+            if (!dependencies[b]) return 1;
+            if (dependencies[b].indexOf(a) >= 0) return -1;
+            if (dependencies[a].indexOf(b) >= 0) return 1;
+            return 0;
+        })
+        for (const dep of deps) {
+            task.add((next, retry)=>{
+                assetManager.loadBundle(dep, (err) => {
+                    if (err) return retry(0.1);
+                    next();
+                });
+            })
+        }
+
+        return task
+            .add((next, retry) => { // 加载control(废弃)
                 if (projectBundles.indexOf(ControlBundleName) === -1) return next();
                 assetManager.loadBundle(ControlBundleName, (err) => {
                     if (err) return retry(0.1);
