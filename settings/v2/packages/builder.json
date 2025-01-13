@@ -176,7 +176,7 @@
             "overwriteSettings": {}
           },
           "miniGame": {
-            "configMode": "fallback",
+            "configMode": "overwrite",
             "overwriteSettings": {
               "xiaomi-quick-game": {
                 "compressionType": "subpackage"
@@ -224,7 +224,7 @@
         "configs": {
           "native": {
             "preferredOptions": {
-              "isRemote": true,
+              "isRemote": false,
               "compressionType": "merge_dep"
             }
           },
@@ -242,7 +242,37 @@
               "isRemote": true,
               "compressionType": "merge_dep"
             },
-            "configMode": "fallback"
+            "configMode": "overwrite",
+            "overwriteSettings": {
+              "alipay-mini-game": {
+                "compressionType": "subpackage"
+              },
+              "bytedance-mini-game": {
+                "compressionType": "subpackage"
+              },
+              "fb-instant-games": {
+                "compressionType": "merge_dep",
+                "isRemote": true
+              },
+              "huawei-quick-game": {
+                "compressionType": "subpackage"
+              },
+              "oppo-mini-game": {
+                "compressionType": "subpackage"
+              },
+              "taobao-mini-game": {
+                "compressionType": "subpackage"
+              },
+              "vivo-mini-game": {
+                "compressionType": "subpackage"
+              },
+              "wechatgame": {
+                "compressionType": "subpackage"
+              },
+              "xiaomi-quick-game": {
+                "compressionType": "subpackage"
+              }
+            }
           }
         }
       }
